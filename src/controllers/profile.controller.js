@@ -77,6 +77,7 @@ export const createOrUpdateProfileController = async (req, res) => {
     const firstName = getFirstName();
     const lastName = getLastName();
     const email = requestBody.personalInfo?.email || user.email || "";
+    const userName = requestBody.personalInfo?.userName || user.userName || "";
 
     if (!firstName || !lastName) {
       return res.status(400).json({ 
@@ -91,12 +92,14 @@ export const createOrUpdateProfileController = async (req, res) => {
         firstName,
         lastName,
         email,
+        userName,
       };
     } else {
       requestBody.personalInfo = {
         firstName,
         lastName,
         email,
+        userName,
       };
     }
 

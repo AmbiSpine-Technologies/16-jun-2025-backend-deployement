@@ -22,6 +22,7 @@ export const createOrUpdateProfile = async (userId, profileData) => {
     const firstName = personalInfo.firstName?.trim() || user.firstName?.trim();
     const lastName = personalInfo.lastName?.trim() || user.lastName?.trim();
     const email = personalInfo.email?.trim() || user.email?.trim();
+    const userName = personalInfo.userName?.trim() || profileData.userName?.trim() || user.userName?.trim();
     
     // Validate required fields
     if (!firstName || firstName.length < 2) {
@@ -48,6 +49,9 @@ export const createOrUpdateProfile = async (userId, profileData) => {
       };
     }
 
+    if (!userName) {
+    return { success: false, message: "Username is required" };
+}
     const updatedProfileData = {
       ...profileData,
       personalInfo: {
@@ -55,6 +59,7 @@ export const createOrUpdateProfile = async (userId, profileData) => {
         firstName: firstName,
         lastName: lastName,
         email: email.toLowerCase(),
+        userName: userName,
       },
     };
 
@@ -131,7 +136,7 @@ export const createOrUpdateProfile = async (userId, profileData) => {
 
 export const getProfileByUserId = async (userId) => {
   try {
-    const profile = await Profile.findOne({ userId }).populate("userId", "userName email firstName lastName profileImage");
+    const profile = await Profile.findOne({ userId }).populate("userId", "userName email firstName lastName profileImage ");
     
     if (!profile) {
       return {
@@ -146,7 +151,7 @@ export const getProfileByUserId = async (userId) => {
         .populate("following", "_id userName firstName lastName profileImage")
         .lean(),
       Connection.find({ following: userId, status: "accepted" })
-        .populate("follower", "_id userName firstName lastName profileImage")
+        .populate("follower", "_id userName firstName lastName profileImage,")
         .lean(),
     ]);
 
@@ -219,35 +224,6 @@ export const getProfileByUsername = async (username) => {
     };
   }
 };
-
-// export const updateProfileSection = async (userId, section, data) => {
-//   try {
-//     const profile = await Profile.findOne({ userId });
-
-//     if (!profile) {
-//       return {
-//         success: false,
-//         message: "Profile not found. Please create profile first.",
-//       };
-//     }
-
-//     profile[section] = data;
-//     profile.lastUpdated = new Date();
-//     await profile.save();
-
-//     return {
-//       success: true,
-//       message: `${section} updated successfully`,
-//       data: profile,
-//     };
-//   } catch (error) {
-//     console.error("Update profile section error:", error);
-//     return {
-//       success: false,
-//       message: error.message || "Failed to update profile section",
-//     };
-//   }
-// };
 
 
 export const updateProfileSection = async (userId, section, data) => {

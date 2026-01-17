@@ -39,7 +39,7 @@ export const followUserService = async (targetUserId, userId) => {
 
     return {
       success: true,
-      message: "User followed successfully",
+      message: "followed successfully",
     };
   } catch (error) {
     console.error("FOLLOW USER ERROR:", error);
@@ -51,7 +51,7 @@ export const followUserService = async (targetUserId, userId) => {
     }
     return {
       success: false,
-      message: "Failed to follow user",
+      message: "Failed to follow",
       error: error.message,
     };
   }

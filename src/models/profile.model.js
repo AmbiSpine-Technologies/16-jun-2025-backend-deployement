@@ -83,6 +83,7 @@ const profileSchema = new mongoose.Schema(
       lastName: { type: String, required: true, trim: true },
       headline: { type: String, default: "" }, 
       email: { type: String, required: true, trim: true, lowercase: true },
+      userName: { type: String, required: true, trim: true, lowercase: true },
       phone: { type: String, default: "" },
       country: { type: String, default: "" },
       state: { type: String, default: "" },
