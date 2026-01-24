@@ -25,7 +25,6 @@ export const authMiddleware = async (req, res, next) => {
 
     // Try to find user by ID
     let user = await User.findById(decoded.id).select("-password");
- console.log(user);
     // If user not found, log detailed error for debugging
     if (!user) {
       console.error("❌ AUTH ERROR: User not found in database", {

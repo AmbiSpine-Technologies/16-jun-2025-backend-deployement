@@ -1,6 +1,6 @@
 import Company from "../models/company.model.js";
 import { MSG } from "../constants/messages.js";
-
+import Profile from "../models/profile.model.js"
 export const createCompanyService = async (companyData, userId) => {
   try {
     
@@ -242,4 +242,121 @@ export const getAllCompaniesService = async (filters = {}, pagination = {}) => {
   }
 };
 
+// src/services/company.service.js
+export const getCompanySuggestionsService = async (userId, limit = 10) => {
+  try {
+    const profile = await Profile.findOne({ userId }).lean();
 
+    let followedCompanies = [];
+    let scoredResults = [];
+
+    // Only run scoring logic if profile exists
+    if (profile) {
+      followedCompanies = profile.followedCompanies || [];
+
+      const industryPref = profile.careerExpectations?.industry;
+      const locationPref = profile.jobAlertPreferences?.locationPreference;
+      const interests = profile.interestsAndPreferences?.communityInterestClusters || [];
+
+      const companies = await Company.find({
+        isActive: true,
+        _id: { $nin: followedCompanies },
+      }).select("name logo tagline industry orgType location followers isVerified createdAt").lean();
+
+      const scored = companies.map((company) => {
+        let score = 0;
+        if (industryPref && company.industry?.toLowerCase().includes(industryPref.toLowerCase())) score += 4;
+        if (interests.some((i) => company.industry?.toLowerCase().includes(i.toLowerCase()))) score += 3;
+        if (locationPref && company.location?.toLowerCase().includes(locationPref.toLowerCase())) score += 2;
+        score += Math.min((company.followers || 0) / 100, 5);
+        if (company.isVerified) score += 1.5;
+        return { company, score };
+      });
+
+      scoredResults = scored.filter((c) => c.score > 0).sort((a, b) => b.score - a.score).slice(0, limit);
+    }
+
+    // 6️⃣ Fallback (Runs if no profile OR not enough scored results)
+    if (scoredResults.length < limit) {
+      const usedIds = scoredResults.map((r) => r.company._id);
+      const fallback = await Company.find({
+        isActive: true,
+        _id: { $nin: [...followedCompanies, ...usedIds] },
+      })
+        .sort({ followers: -1 })
+        .limit(limit - scoredResults.length)
+        .lean();
+
+      fallback.forEach((company) => {
+        scoredResults.push({ company, score: 0 });
+      });
+    }
+
+    return { success: true, count: scoredResults.length, data: scoredResults };
+  } catch (error) {
+    console.error("SERVICE ERROR:", error);
+    return { success: false, message: "Suggestion failed", data: [] };
+  }
+};
+
+// export const getCompanySuggestionsService = async (userId, limit = 10) => {
+//   try {
+//     const profile = await Profile.findOne({ user: userId }).lean();
+
+//     if (!profile) {
+//       return { success: false, message: "Profile not found" };
+//     }
+
+//     const industryPref = profile.careerExpectations?.industry;
+//     const locationPref = profile.jobAlertPreferences?.locationPreference;
+//     const interests =
+//       profile.interestsAndPreferences?.communityInterestClusters || [];
+
+//     const followedCompanies = profile.followedCompanies || [];
+
+//     const companies = await Company.find({
+//       isActive: true,
+//       _id: { $nin: followedCompanies },
+//     }).lean();
+
+//     const scored = companies.map((company) => {
+//       let score = 0;
+
+//       if (
+//         industryPref &&
+//         company.industry?.toLowerCase().includes(industryPref.toLowerCase())
+//       ) score += 4;
+
+//       if (
+//         interests.some((i) =>
+//           company.industry?.toLowerCase().includes(i.toLowerCase())
+//         )
+//       ) score += 3;
+
+//       if (
+//         locationPref &&
+//         company.location?.toLowerCase().includes(locationPref.toLowerCase())
+//       ) score += 2;
+
+//       const followersCount = Array.isArray(company.followers)
+//         ? company.followers.length
+//         : 0;
+
+//       score += Math.min(followersCount / 100, 5);
+
+//       if (company.isVerified) score += 1.5;
+
+//       return { company, score };
+//     });
+
+//     const results = scored
+//       .filter((c) => c.score > 0)
+//       .sort((a, b) => b.score - a.score)
+//       .slice(0, limit);
+
+//     return { success: true, data: results };
+//   } catch (error) {
+//     console.error("COMPANY SUGGESTION ERROR:", error);
+//     return { success: false, message: error.message };
+//   }
+// };

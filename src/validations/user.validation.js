@@ -18,7 +18,7 @@ export const registerValidation = Joi.object({
 });
 
 export const loginValidation = Joi.object({
-  email: Joi.string().required(),
+  identifier: Joi.string().required(),
   password: Joi.string().required(),
   rememberMe: Joi.boolean().optional()
 });

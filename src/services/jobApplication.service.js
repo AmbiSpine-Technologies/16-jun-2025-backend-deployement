@@ -136,6 +136,10 @@ export const createJobApplicationService = async (jobId, userId, data) => {
       resumeUrl: data.resumeUrl || "",
       coverLetter: data.coverLetter || "",
       answers: data.answers || [],
+      experience: data.experience,         // <--- Added
+      currentCtc: data.currentCtc,         // <--- Added
+      expectedCtc: data.expectedCtc,       // <--- Added
+      noticePeriod: data.noticePeriod,     // <--- Added
       status: "pending",
       matchScore: matchScore,
     });

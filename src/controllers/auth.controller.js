@@ -2,6 +2,7 @@ import { registerValidation, loginValidation } from "../validations/user.validat
 import { registerService, loginService } from "../services/auth.service.js";
 import { MSG } from "../constants/messages.js";
 import User from "../models/user.model.js";
+
 export const registerUser = async (req, res) => {
   try {
     const { email, isEmailVerified } = req.body;
@@ -26,9 +27,9 @@ export const loginUser = async (req, res) => {
     const { error } = loginValidation.validate(req.body);
     if (error) return res.status(400).json({ message: error.message });
 
-    const { email, password, rememberMe } = req.body;
+    const { identifier, password, rememberMe } = req.body;
 
-    const result = await loginService(email, password, rememberMe);
+    const result = await loginService(identifier, password, rememberMe);
     res.status(result.success ? 200 : 400).json(result);
 
   } catch (err) {

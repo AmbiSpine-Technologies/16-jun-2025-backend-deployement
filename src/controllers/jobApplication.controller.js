@@ -12,10 +12,13 @@ import {
 } from "../services/jobApplication.service.js";
 import { MSG } from "../constants/messages.js";
 
-// Create a job application
+
+
 export const createJobApplication = async (req, res) => {
   try {
-    const { id } = req.params; // job id
+    const { id } = req.params; // Job ID
+
+    // 1. Validate Text Fields
     const { error } = createJobApplicationValidation.validate(req.body);
     if (error) {
       return res.status(400).json({
@@ -24,13 +27,28 @@ export const createJobApplication = async (req, res) => {
       });
     }
 
-    const result = await createJobApplicationService(id, req.user._id, req.body);
+    // 2. Prepare Data for Service
+    const applicationData = {
+      ...req.body, // spread experience, ctc, etc.
+    };
+
+    // 3. Handle the File (Multer)
+    // If you use Cloudinary/S3 middleware, the url is usually in req.file.path or req.file.location
+    if (req.file) {
+      applicationData.resumeUrl = req.file.path || req.file.location;
+      applicationData.resumeOriginalName = req.file.originalname;
+    } else {
+        return res.status(400).json({ success: false, message: "Resume file is required" });
+    }
+
+    const result = await createJobApplicationService(id, req.user._id, applicationData);
+    
     res.status(result.success ? 201 : 400).json(result);
   } catch (err) {
     console.error("CREATE JOB APPLICATION ERROR:", err);
     res.status(500).json({
       success: false,
-      message: MSG.ERROR.SERVER_ERROR || "Internal server error",
+      message: "Internal server error",
     });
   }
 };

@@ -18,6 +18,7 @@ const workExperienceSchema = Joi.object({
   hidden: Joi.boolean().default(false),
 });
 
+
 const educationSchema = Joi.object({
   degree: Joi.string().required(),
   institution: Joi.string().required(),
@@ -82,8 +83,11 @@ const personalInfoSchema = Joi.object({
   location: Joi.string().allow(""),
   preferredLanguage: Joi.string().allow(""),
   dateOfBirth: Joi.string().allow(""),
+  userName:  Joi.string().allow(""),
   gender: Joi.string().valid("Male", "Female", "Others", "").allow(""),
-  journeyType: Joi.string().valid("Student", "Professional / Jobseeker", "").allow(""),
+  journeyType: Joi.string().valid("Student", "Professional / Jobseeker", "Recruiter", 
+        "TPO", "").allow(""),
+  
 });
 
 const learningJourneySchema = Joi.object({
@@ -150,7 +154,13 @@ export const createProfileValidation = Joi.object({
   projects: Joi.array().items(projectSchema).default([]),
   skills: Joi.array().items(Joi.string()).default([]),
   interests: Joi.array().items(Joi.string()).default([]),
-  languages: Joi.array().items(Joi.string()).default([]),
+
+  languages: Joi.array().items(
+  Joi.object({
+    name: Joi.string().required(),
+    level: Joi.string().valid("Basic", "Intermediate", "Fluent", "Native")
+  })
+).default([]),
   certificates: Joi.array().items(certificateSchema).default([]),
   publications: Joi.array().items(publicationSchema).default([]),
   awardsAchievements: Joi.array().items(awardAchievementSchema).default([]),
@@ -164,9 +174,24 @@ export const updateProfileValidation = Joi.object({
   workExperience: Joi.array().items(workExperienceSchema).optional(),
   education: Joi.array().items(educationSchema).optional(),
   projects: Joi.array().items(projectSchema).optional(),
-  skills: Joi.array().items(Joi.string()).optional(),
-  interests: Joi.array().items(Joi.string()).optional(),
-  languages: Joi.array().items(Joi.string()).optional(),
+  skills: Joi.object({
+  technical: Joi.array().items(Joi.string()).default([]),
+  soft: Joi.array().items(Joi.string()).default([]),
+}).default({
+  technical: [],
+  soft: [],
+}),
+interests: Joi.array()
+  .items(Joi.string())
+  .default([]),
+  languages: Joi.array()
+  .items(
+    Joi.object({
+      name: Joi.string().required(),
+      proficiency: Joi.string().optional()
+    })
+  )
+  .default([]),
   certificates: Joi.array().items(certificateSchema).optional(),
   publications: Joi.array().items(publicationSchema).optional(),
   awardsAchievements: Joi.array().items(awardAchievementSchema).optional(),
@@ -178,14 +203,33 @@ export const updateProfileValidation = Joi.object({
   profileImage: Joi.string().allow("").optional(),
 }).unknown(false); // Explicitly reject unknown fields
 
+
+export const addWorkExperienceValidation = workExperienceSchema;
+export const updateWorkExperienceItemValidation = workExperienceSchema;
+
+
 export const updatePersonalInfoValidation = personalInfoSchema;
 export const updateSocialLinksValidation = Joi.array().items(socialLinkSchema);
 export const updateWorkExperienceValidation = Joi.array().items(workExperienceSchema);
 export const updateEducationValidation = Joi.array().items(educationSchema);
 export const updateProjectsValidation = Joi.array().items(projectSchema);
-export const updateSkillsValidation = Joi.array().items(Joi.string());
+
+export const updateSkillsValidation = Joi.object({
+  technical: Joi.array().items(Joi.string()).default([]),
+  soft: Joi.array().items(Joi.string()).default([]),
+});
+
 export const updateInterestsValidation = Joi.array().items(Joi.string());
-export const updateLanguagesValidation = Joi.array().items(Joi.string());
+
+export const updateLanguagesValidation = Joi.array().items(
+  Joi.object({
+    language: Joi.string().required(),
+    proficiency: Joi.string()
+      .valid("beginner", "intermediate", "advanced", "native")
+      .required(),
+  })
+);
+
 export const updateCertificatesValidation = Joi.array().items(certificateSchema);
 export const updatePublicationsValidation = Joi.array().items(publicationSchema);
 export const updateAwardsAchievementsValidation = Joi.array().items(awardAchievementSchema);

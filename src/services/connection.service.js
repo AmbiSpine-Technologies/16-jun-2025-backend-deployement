@@ -282,7 +282,7 @@ export const getFriendSuggestionsService = async (userId, limit = 10) => {
       // UPDATE 1: User details ke saath 'profile' virtual ko populate karein
       .populate({
         path: "following",
-        select: "firstName lastName userName email",
+        select: "firstName lastName userName email headline",
         populate: { path: "profile" } // User ke andar profile details laane ke liye
       })
       .limit(limit * 2)
@@ -312,7 +312,7 @@ export const getFriendSuggestionsService = async (userId, limit = 10) => {
       const randomUsers = await User.find({
         _id: { $nin: followingIds },
       })
-        .select("firstName lastName userName email")
+        .select("firstName lastName userName email headline")
         .populate("profile") // Profile details (image, bio etc.) yahan se aayengi
         .limit(limit - sortedSuggestions.length)
         .lean();

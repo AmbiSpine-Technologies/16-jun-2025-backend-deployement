@@ -29,6 +29,7 @@ export const registerService = async (data) => {
       firstName: user.firstName || "",
       lastName: user.lastName || "",
       email: user.email,
+      userName: user.userName,
     },
   });
   const token = generateToken(user._id);
@@ -40,9 +41,12 @@ export const registerService = async (data) => {
   };
 };
 
-export const loginService = async (email, password, rememberMe) => {
-  const user = await User.findOne({
-    $or: [{ email }, { email: email }],
+export const loginService = async (identifier, password, rememberMe) => {
+   const user = await User.findOne({
+    $or: [
+      { email: identifier },
+      { userName: identifier },
+    ],
   });
 
   if (!user) {
@@ -55,7 +59,7 @@ export const loginService = async (email, password, rememberMe) => {
     return { success: false, message: MSG.AUTH.INVALID_CREDENTIALS };
   }
 
-   const tokenExpiry = rememberMe ? "30d" : "1d";
+   const tokenExpiry = rememberMe ? "30d" : "7d";
 
   const token = generateToken(user._id, tokenExpiry);
 

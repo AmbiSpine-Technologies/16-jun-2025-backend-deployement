@@ -18,7 +18,7 @@ import {
   withdrawApplication,
 } from "../controllers/jobApplication.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
-
+import { upload } from "../utils/upload.js";
 const router = express.Router();
 
 // Public routes (no auth required)
@@ -34,7 +34,7 @@ router.delete("/delete/:id", authMiddleware, deleteJob);
 router.patch("/toggle-status/:id", authMiddleware, toggleJobStatus);
 
 // Job Applications routes
-router.post("/:id/apply", authMiddleware, createJobApplication);
+router.post("/:id/apply", authMiddleware, upload.single("resume"), createJobApplication);
 router.get("/applications/my", authMiddleware, getMyApplications);
 router.get("/:id/applications", authMiddleware, getJobApplications);
 router.get("/applications/:id", authMiddleware, getApplicationById);

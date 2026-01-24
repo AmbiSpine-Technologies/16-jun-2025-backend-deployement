@@ -25,15 +25,22 @@ import {
   addCertificateController,
   updateCertificateItemController,
   deleteCertificateItemController,
+  addAwardController,
+  deleteAwardController,
+
   updateLearningJourneyController,
   updateCareerExpectationsController,
   updateJobAlertPreferencesController,
   updateRecentExperienceController,
   updateInterestsAndPreferencesController,
   deleteProfileController,
+  addPublicationController,
+  updatePublicationItemController,
+  deletePublicationItemController,
+  updateAwardController,
 } from "../controllers/profile.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
-
+import { upload } from "../utils/upload.js"
 const router = express.Router();
 
 router.get("/username/:username", getProfileByUsernameController);
@@ -71,10 +78,21 @@ router.put("/skills", updateSkillsController);
 router.put("/interests", updateInterestsController);
 router.put("/languages", updateLanguagesController);
 
-router.put("/certificates", updateCertificatesController);
-router.post("/certificates", addCertificateController);
+router.put("/certificates", upload.single('certificateImage'), updateCertificatesController);
+router.post("/certificates", upload.single('certificateImage'), addCertificateController);
 router.put("/certificates/:itemId", updateCertificateItemController);
 router.delete("/certificates/:itemId", deleteCertificateItemController);
+
+// award 
+router.post("/awards", upload.single('media'), addAwardController);
+router.delete("/awards/:itemId", deleteAwardController);
+router.put("/awards/:itemId", upload.single('media'), updateAwardController);
+
+router.post("/publications", authMiddleware, addPublicationController);
+router.put("/publications/:itemId", authMiddleware, updatePublicationItemController);
+router.delete("/publications/:itemId", authMiddleware, deletePublicationItemController);
+
+
 
 router.put("/learning-journey", updateLearningJourneyController);
 

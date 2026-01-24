@@ -32,6 +32,12 @@ import {
 import { MSG } from "../constants/messages.js";
 import User from "../models/user.model.js";
 
+
+import {
+  addWorkExperienceValidation,
+  updateWorkExperienceItemValidation
+} from "../validations/profile.validation.js";
+
 export const createOrUpdateProfileController = async (req, res) => {
   try {
     const userId = req.user?._id || req.user?.id;
@@ -237,92 +243,87 @@ export const updateProfileSummaryController = async (req, res) => {
   }
 };
 
+// Social Links ke liye specific update logic
 export const updateSocialLinksController = async (req, res) => {
   try {
     const userId = req.user?._id || req.user?.id;
-    
-    if (!userId) {
-      return res.status(401).json({ 
-        success: false, 
-        message: "Unauthorized. Please login first." 
-      });
-    }
 
-    const { error } = updateSocialLinksValidation.validate(req.body);
+    // Joi Validation: Body array honi chahiye
+    const { error, value: validatedLinks } = updateSocialLinksValidation.validate(req.body);
+
     if (error) {
-      return res.status(400).json({ 
-        success: false, 
-        message: error.details[0].message 
-      });
+      return res.status(400).json({ success: false, message: error.details[0].message });
     }
 
-    const result = await updateProfileSection(userId, "socialLinks", req.body);
+    // Database Update: Use helper function with runValidators: false
+    const result = await updateArrayField(userId, "socialLinks", validatedLinks);
+    
     res.status(result.success ? 200 : 400).json(result);
   } catch (err) {
-    console.error("Update social links error:", err);
-    res.status(500).json({ 
-      success: false, 
-      message: MSG.ERROR.SERVER_ERROR 
-    });
+    console.error("Social Links Update Error:", err);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
 
 export const updateWorkExperienceController = async (req, res) => {
   try {
     const userId = req.user?._id || req.user?.id;
-    
+    // Extract userName from the authenticated user object
+    const userName = req.user?.userName || req.user?.firstName || "User";
+    console.log("REQ BODY TYPE:", Array.isArray(req.body));
+console.log("REQ BODY:", req.body);
+
     if (!userId) {
-      return res.status(401).json({ 
-        success: false, 
-        message: "Unauthorized. Please login first." 
-      });
+      return res.status(401).json({ success: false, message: "Unauthorized." });
     }
 
+    // Joi validation for the array
     const { error } = updateWorkExperienceValidation.validate(req.body);
     if (error) {
-      return res.status(400).json({ 
-        success: false, 
-        message: error.details[0].message 
-      });
+      return res.status(400).json({ success: false, message: error.details[0].message });
     }
 
+    // Service call
     const result = await updateProfileSection(userId, "workExperience", req.body);
     res.status(result.success ? 200 : 400).json(result);
   } catch (err) {
-    console.error("Update work experience error:", err);
-    res.status(500).json({ 
-      success: false, 
-      message: MSG.ERROR.SERVER_ERROR 
-    });
+    res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
 
 export const addWorkExperienceController = async (req, res) => {
   try {
     const userId = req.user?._id || req.user?.id;
-    
+
     if (!userId) {
-      return res.status(401).json({ 
-        success: false, 
-        message: "Unauthorized. Please login first." 
-      });
+      return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
-    const { error } = updateWorkExperienceValidation.validate([req.body]);
+    // ✅ VALIDATE OBJECT (NOT ARRAY)
+    const { error, value } = addWorkExperienceValidation.validate(req.body, {
+      abortEarly: true,
+    });
+
     if (error) {
-      return res.status(400).json({ 
-        success: false, 
-        message: error.details[0].message 
+      return res.status(400).json({
+        success: false,
+        message: error.details[0].message,
       });
     }
 
-    const result = await addItemToSection(userId, "workExperience", req.body);
-    res.status(result.success ? 200 : 400).json(result);
+    const result = await addItemToSection(
+      userId,
+      "workExperience",
+      value // CLEAN OBJECT
+    );
+
+    return res.status(result.success ? 200 : 400).json(result);
   } catch (err) {
     console.error("Add work experience error:", err);
-    res.status(500).json({ 
-      success: false, 
-      message: MSG.ERROR.SERVER_ERROR 
+    return res.status(500).json({
+      success: false,
+      message: "Server Error",
     });
   }
 };
@@ -331,25 +332,40 @@ export const updateWorkExperienceItemController = async (req, res) => {
   try {
     const userId = req.user?._id || req.user?.id;
     const { itemId } = req.params;
-    
+
     if (!userId) {
-      return res.status(401).json({ 
-        success: false, 
-        message: "Unauthorized. Please login first." 
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized. Please login first.",
       });
     }
 
-    const result = await updateItemInSection(userId, "workExperience", itemId, req.body);
-    res.status(result.success ? 200 : 400).json(result);
+    // ✅ VALIDATE OBJECT
+    const { error, value } = updateWorkExperienceItemValidation.validate(req.body);
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error.details[0].message,
+      });
+    }
+
+    const result = await updateItemInSection(
+      userId,
+      "workExperience",
+      itemId,
+      value
+    );
+
+    return res.status(result.success ? 200 : 400).json(result);
   } catch (err) {
     console.error("Update work experience item error:", err);
-    res.status(500).json({ 
-      success: false, 
-      message: MSG.ERROR.SERVER_ERROR 
+    return res.status(500).json({
+      success: false,
+      message: "Server Error",
     });
   }
 };
-
 export const deleteWorkExperienceItemController = async (req, res) => {
   try {
     const userId = req.user?._id || req.user?.id;
@@ -569,93 +585,101 @@ export const deleteProjectItemController = async (req, res) => {
   }
 };
 
+
 export const updateSkillsController = async (req, res) => {
   try {
-    const userId = req.user?._id || req.user?.id;
+    const userId = req.user?.id;
     
-    if (!userId) {
-      return res.status(401).json({ 
-        success: false, 
-        message: "Unauthorized. Please login first." 
-      });
-    }
+    // Validate request body matches { technical: [], soft: [] }
+    const { error, value: validatedSkills } = updateSkillsValidation.validate(req.body);
 
-    const { error } = updateSkillsValidation.validate(req.body);
-    if (error) {
-      return res.status(400).json({ 
-        success: false, 
-        message: error.details[0].message 
-      });
-    }
+    if (error) return res.status(400).json({ success: false, message: error.details[0].message });
 
-    const result = await updateArrayField(userId, "skills", req.body);
-    res.status(result.success ? 200 : 400).json(result);
+    // Pass the OBJECT directly
+    const result = await updateArrayField(userId, "skills", validatedSkills);
+    
+    // Status handling
+    if (!result.success) return res.status(400).json(result);
+    res.status(200).json(result);
+
   } catch (err) {
-    console.error("Update skills error:", err);
-    res.status(500).json({ 
-      success: false, 
-      message: MSG.ERROR.SERVER_ERROR 
-    });
+    console.error("Skills Controller Error:", err);
+    res.status(500).json({ success: false, message: "Server Error" });
   }
 };
 
+// 2. Interests Controller
+// 1. Define this Helper Function at the top of the file
+// const updateArrayField = async (userId, field, items) => {
+//   try {
+//     const updatedProfile = await Profile.findOneAndUpdate(
+//       { userId },
+//       { 
+//         $set: { 
+//           [field]: items, 
+//           lastUpdated: new Date() 
+//         } 
+//       },
+//       { 
+//         new: true, 
+//         runValidators: false, // 🔥 This prevents the crash caused by empty certificates
+//         upsert: true 
+//       }
+//     );
+
+//     if (!updatedProfile) return { success: false, message: "Profile not found" };
+
+//     return {
+//       success: true,
+//       message: `${field} updated successfully`,
+//       data: updatedProfile[field],
+//     };
+//   } catch (error) {
+//     console.error(`Database Error in ${field}:`, error.message);
+//     return { success: false, message: error.message };
+//   }
+// };
+
+// 2. Update the Interests Controller to use the helper
 export const updateInterestsController = async (req, res) => {
   try {
-    const userId = req.user?._id || req.user?.id;
+    const userId = req.user?.id;
     
-    if (!userId) {
-      return res.status(401).json({ 
-        success: false, 
-        message: "Unauthorized. Please login first." 
-      });
-    }
+    // Validate that req.body is an array of strings ["Coding", "Design"]
+    const { error, value: validatedInterests } = updateInterestsValidation.validate(req.body);
 
-    const { error } = updateInterestsValidation.validate(req.body);
-    if (error) {
-      return res.status(400).json({ 
-        success: false, 
-        message: error.details[0].message 
-      });
-    }
+    if (error) return res.status(400).json({ success: false, message: error.details[0].message });
 
-    const result = await updateArrayField(userId, "interests", req.body);
-    res.status(result.success ? 200 : 400).json(result);
+    // 🔥 Update Database atomically
+    const result = await updateArrayField(userId, "interests", validatedInterests);
+    
+    if (!result.success) return res.status(400).json(result);
+    
+    // res.status(200).json(result);
+    res.status(200).json({
+  success: true,
+  data: result.data // Ye updated interests array hoga
+});
   } catch (err) {
-    console.error("Update interests error:", err);
-    res.status(500).json({ 
-      success: false, 
-      message: MSG.ERROR.SERVER_ERROR 
-    });
+    console.error("Interests Update Error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
+// 3. Languages Controller
 export const updateLanguagesController = async (req, res) => {
   try {
-    const userId = req.user?._id || req.user?.id;
+    const userId = req.user?.id;
+    const { error, value: validatedLanguages } = updateLanguagesValidation.validate(req.body);
+
+    if (error) return res.status(400).json({ success: false, message: error.details[0].message });
+
+    const result = await updateArrayField(userId, "languages", validatedLanguages);
     
-    if (!userId) {
-      return res.status(401).json({ 
-        success: false, 
-        message: "Unauthorized. Please login first." 
-      });
-    }
-
-    const { error } = updateLanguagesValidation.validate(req.body);
-    if (error) {
-      return res.status(400).json({ 
-        success: false, 
-        message: error.details[0].message 
-      });
-    }
-
-    const result = await updateArrayField(userId, "languages", req.body);
-    res.status(result.success ? 200 : 400).json(result);
+    if (!result.success) return res.status(400).json(result);
+    res.status(200).json(result);
   } catch (err) {
-    console.error("Update languages error:", err);
-    res.status(500).json({ 
-      success: false, 
-      message: MSG.ERROR.SERVER_ERROR 
-    });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
@@ -688,26 +712,23 @@ export const updateCertificatesController = async (req, res) => {
     });
   }
 };
-
+// certificates 
 export const addCertificateController = async (req, res) => {
   try {
-    const userId = req.user?._id || req.user?.id;
-    
-    if (!userId) {
-      return res.status(401).json({ 
-        success: false, 
-        message: "Unauthorized. Please login first." 
-      });
+    const userId = req.user?.id;
+    let itemData = { ...req.body };
+
+    // Agar multer ne file upload karke Cloudinary URL diya hai
+    if (req.file) {
+      // Cloudinary storage engine (multer-storage-cloudinary) 
+      // automatically path ya secure_url return karta hai
+      itemData.credentialUrl = req.file.path || req.file.secure_url;
     }
 
-    const result = await addItemToSection(userId, "certificates", req.body);
+    const result = await addItemToSection(userId, "certificates", itemData);
     res.status(result.success ? 200 : 400).json(result);
   } catch (err) {
-    console.error("Add certificate error:", err);
-    res.status(500).json({ 
-      success: false, 
-      message: MSG.ERROR.SERVER_ERROR 
-    });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
@@ -756,6 +777,160 @@ export const deleteCertificateItemController = async (req, res) => {
     });
   }
 };
+
+export const deleteAwardController = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+    const userId = req.user?.id;
+
+    // $pull operator array se matching ID wale element ko delete kar deta hai
+    const profile = await Profile.findOneAndUpdate(
+      { user: userId },
+      { 
+        $pull: { awardsAchievements: { _id: itemId } } 
+      },
+      { new: true } // Updated profile return karega
+    );
+
+    if (!profile) {
+      return res.status(404).json({ success: false, message: "Profile not found" });
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      message: "Award deleted successfully",
+      data: itemId // Frontend ko ID wapas bhejte hain state filter karne ke liye
+    });
+
+  } catch (err) {
+    console.error("Delete Error:", err);
+    res.status(500).json({ success: false, message: "Server error during deletion" });
+  }
+};
+
+// controller.js
+export const updateAwardController = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+    const userId = req.user?.id;
+    
+    // Sirf wahi fields nikalein jo update karni hain
+    const { title, issuer, date, description } = req.body;
+    let updateData = { title, issuer, date, description };
+
+    if (req.file) {
+      updateData.media = req.file.path || req.file.secure_url;
+    }
+
+    const profile = await Profile.findOneAndUpdate(
+      { user: userId, "awardsAchievements._id": itemId },
+      { 
+        $set: { 
+          "awardsAchievements.$": { ...updateData, _id: itemId } 
+        } 
+      },
+      { new: true }
+    );
+
+    if (!profile) return res.status(404).json({ success: false, message: "Item not found" });
+
+    res.status(200).json({ success: true, data: profile.awardsAchievements.id(itemId) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error during update" });
+  }
+};
+
+// awards
+export const addAwardController = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    let itemData = { ...req.body };
+
+    // Handle image upload if provided
+    if (req.file) {
+      itemData.media = req.file.path || req.file.secure_url;
+    }
+
+    const result = await addItemToSection(userId, "awardsAchievements", itemData);
+    res.status(result.success ? 200 : 400).json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// Add a new publication
+export const addPublicationController = async (req, res) => {
+  try {
+    const userId = req.user?._id || req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "Unauthorized. Please login first." 
+      });
+    }
+
+    // Matches your publicationSchema fields: title, publisher, publicationDate, url, description
+    const result = await addItemToSection(userId, "publications", req.body);
+    res.status(result.success ? 200 : 400).json(result);
+  } catch (err) {
+    console.error("Add publication error:", err);
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error while adding publication" 
+    });
+  }
+};
+
+// Update an existing publication
+export const updatePublicationItemController = async (req, res) => {
+  try {
+    const userId = req.user?._id || req.user?.id;
+    const { itemId } = req.params;
+    
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "Unauthorized. Please login first." 
+      });
+    }
+
+    const result = await updateItemInSection(userId, "publications", itemId, req.body);
+    res.status(result.success ? 200 : 400).json(result);
+  } catch (err) {
+    console.error("Update publication item error:", err);
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error while updating publication" 
+    });
+  }
+};
+
+// Delete a publication
+export const deletePublicationItemController = async (req, res) => {
+  try {
+    const userId = req.user?._id || req.user?.id;
+    const { itemId } = req.params;
+    
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "Unauthorized. Please login first." 
+      });
+    }
+
+    const result = await deleteItemFromSection(userId, "publications", itemId);
+    res.status(result.success ? 200 : 400).json(result);
+  } catch (err) {
+    console.error("Delete publication item error:", err);
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error while deleting publication" 
+    });
+  }
+};
+
 
 export const updateLearningJourneyController = async (req, res) => {
   try {

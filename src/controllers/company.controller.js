@@ -2,6 +2,7 @@ import {
   createCompanyService,
   getCompanyByIdService,
   updateCompanyService,
+  getCompanySuggestionsService,
   deleteCompanyService,
   getMyCompaniesService,
   getAllCompaniesService,
@@ -154,3 +155,42 @@ export const getAllCompanies = async (req, res) => {
 };
 
 
+// get suggestion company
+// export const getCompanySuggestions = async (req, res) => {
+//   try {
+//     const limit = parseInt(req.query.limit) || 10;
+
+//     const result = await getCompanySuggestionsService(req.user._id, limit);
+
+//     if (!result.success) {
+//       return res.status(400).json(result);
+//     }
+
+//     res.status(200).json(result);
+//   } catch (error) {
+//     console.error("GET COMPANY SUGGESTIONS ERROR:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch company suggestions",
+//     });
+//   }
+// };
+
+
+export const getCompanySuggestions = async (req, res) => {
+  try {
+    // DEBUG: If this is undefined, your Auth Middleware is failing
+    console.log("User ID from request:", req.user?._id); 
+
+    const limit = parseInt(req.query.limit) || 10;
+    const result = await getCompanySuggestionsService(req.user._id, limit);
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+};

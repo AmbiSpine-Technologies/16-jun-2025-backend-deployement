@@ -23,6 +23,10 @@ const jobApplicationSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    experience: { type: String },
+  currentCtc: { type: String },
+  expectedCtc: { type: String },
+  noticePeriod: { type: String },
     coverLetter: {
       type: String,
       default: "",

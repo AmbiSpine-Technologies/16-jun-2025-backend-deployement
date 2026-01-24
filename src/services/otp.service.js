@@ -1,5 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
+import Profile from "../models/profile.model.js";
+
 
 import nodemailer from "nodemailer";
 
@@ -18,6 +20,9 @@ let transporter;
 try {
   transporter = nodemailer.createTransport({
   service: "gmail",
+  // host: process.env.EMAIL_HOST,
+  port: Number(process.env.EMAIL_PORT),
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER, 
     pass: process.env.EMAIL_APP_PASSWORD,
@@ -125,6 +130,128 @@ export const sendOTP = async (email) => {
     };
   }
 };
+
+
+export const HRorTPOsendOTP = async (email, type) => {
+  const otp = Math.floor(100000 + Math.random() * 900000);  
+  const isHR = email.toLowerCase().startsWith('hr');
+  otpStore[email] = otp;
+  
+  const otpExpiry = Date.now() + 10 * 60 * 1000; 
+  otpStore[`${email}_expiry`] = otpExpiry;
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: isHR ? "HR Portal Verification Code" : "TPO College Verification Code",
+    html: `
+     <div style="font-family: Arial, sans-serif; border: 1px solid #ddd; padding: 20px;">
+        <h2 style="color: #0013E3;">${isHR ? 'HR' : 'TPO'} Verification</h2>
+        <p>Please use the code below to verify your account:</p>
+        <div style="background: #f4f4f4; padding: 10px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 4px;">
+          ${otp}
+        </div>
+        <p>This code is valid for 10 minutes.</p>
+      </div>
+    `,
+  };
+
+  try {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
+      console.error("❌ Email credentials not configured");
+      return { 
+        success: false, 
+        message: "Email service not configured. Please contact administrator." 
+      };
+    }
+
+    if (!transporter) {
+      console.error("❌ Email transporter not initialized");
+      return { 
+        success: false, 
+        message: "Email service not properly initialized." 
+      };
+    }
+
+    console.log(`📤 Attempting to send OTP to: ${email}`);
+    console.log(`📧 From: ${process.env.EMAIL_USER}`);
+    
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ OTP sent successfully to ${email}`);
+    return { success: true, message: "OTP sent successfully to your email", email };
+  } catch (error) {
+    console.error("❌ Email sending error:", error);
+    console.error("Error code:", error.code);
+    console.error("Error response:", error.response);
+    
+    if (error.code === 'EAUTH') {
+      
+      const isDevelopment = process.env.NODE_ENV !== 'production';
+      if (isDevelopment) {
+       
+        
+        return { 
+          success: true, 
+          message: `OTP generated (email failed - check console for OTP code): ${otp}`, 
+          email,
+          developmentMode: true,
+          otp: otp
+        };
+      }
+      
+      return { 
+        success: false, 
+        message: "Email authentication failed. Please verify your Gmail App Password is correct. Check server logs for detailed instructions." 
+      };
+    }
+    
+    const isDevelopment = process.env.NODE_ENV !== 'production';
+    if (isDevelopment) {
+      
+      
+      return { 
+        success: true, 
+        message: `OTP generated (email failed - check console for OTP code): ${otp}`, 
+        email,
+        developmentMode: true,
+        otp: otp
+      };
+    }
+    
+    return { 
+      success: false, 
+      message: error.message || "Failed to send verification email. Please try again later." 
+    };
+  }
+};
+
+export const HRprTPOverifyOTP = async (email, otp) => {
+  email = email.toLowerCase().trim();
+  otp = String(otp).trim();
+
+  const storedOtp = String(otpStore[email] || "").trim();
+  const expiry = otpStore[`${email}_expiry`];
+
+  if (!storedOtp) {
+    return { success: false, message: "OTP not found or already used" };
+  }
+
+  if (expiry && Date.now() > expiry) {
+    delete otpStore[email];
+    delete otpStore[`${email}_expiry`];
+    return { success: false, message: "OTP expired" };
+  }
+
+  if (storedOtp === otp) {
+    delete otpStore[email];
+    delete otpStore[`${email}_expiry`];
+    return { success: true, message: "OTP verified successfully" };
+  }
+
+  return { success: false, message: "Invalid OTP" };
+};
+
+
 
 export const verifyOTP = async (email, otp) => {
   const storedOtp = otpStore[email];

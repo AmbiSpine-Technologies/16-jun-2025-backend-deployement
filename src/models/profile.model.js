@@ -62,9 +62,10 @@ const publicationSchema = new mongoose.Schema({
 }, { _id: true });
 
 const awardAchievementSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  issuer: { type: String, default: "" },
-  date: { type: String, default: "" },
+  title: { type: String, required: true }, // Frontend: item.title
+  issuer: { type: String, default: "" },   // Frontend: item.issuer
+  date: { type: String, default: "" },     // Frontend: item.date
+  media: { type: String, default: "" },    // Cloudinary URL storage
   description: { type: String, default: "" },
   hidden: { type: Boolean, default: false },
 }, { _id: true });
@@ -83,7 +84,7 @@ const profileSchema = new mongoose.Schema(
       lastName: { type: String, required: true, trim: true },
       headline: { type: String, default: "" }, 
       email: { type: String, required: true, trim: true, lowercase: true },
-      userName: { type: String, required: true, trim: true, lowercase: true },
+      userName: { type: String, required: true, trim: true,},
       phone: { type: String, default: "" },
       country: { type: String, default: "" },
       state: { type: String, default: "" },
@@ -93,7 +94,8 @@ const profileSchema = new mongoose.Schema(
       preferredLanguage: { type: String, default: "" },
       dateOfBirth: { type: String, default: "" }, 
       gender: { type: String, enum: ["Male", "Female", "Others", ""], default: "" },
-      journeyType: { type: String, enum: ["Student", "Professional / Jobseeker", ""], default: "" }, // What defines your journey
+      journeyType: { type: String, enum: ["Student", "Professional / Jobseeker", "Recruiter", 
+        "TPO", ""], default: "" }, // What defines your journey
     },
 
     socialLinks: [socialLinkSchema],
@@ -106,11 +108,29 @@ const profileSchema = new mongoose.Schema(
 
     projects: [projectSchema],
 
-    skills: [{ type: String }],
+    skills: {
+  technical: {
+    type: [String],
+    default: [],
+  },
+  soft: {
+    type: [String],
+    default: [],
+  },
+},
 
     interests: [{ type: String }],
 
-    languages: [{ type: String }],
+languages: [
+  {
+    language: { type: String, required: true },
+    proficiency: {
+      type: String,
+      enum: ["beginner", "intermediate", "advanced", "native"],
+      default: "beginner",
+    },
+  },
+],
 
     certificates: [certificateSchema],
 
