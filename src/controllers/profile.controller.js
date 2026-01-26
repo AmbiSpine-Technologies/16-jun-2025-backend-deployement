@@ -784,27 +784,18 @@ export const deleteCertificateItemController = async (req, res) => {
 
 export const deleteAwardController = async (req, res) => {
   try {
+    const userId = req.user?._id || req.user?.id;
     const { itemId } = req.params;
-    const userId = req.user?.id;
-
-    // $pull operator array se matching ID wale element ko delete kar deta hai
-    const profile = await Profile.findOneAndUpdate(
-      { user: userId },
-      { 
-        $pull: { awardsAchievements: { _id: itemId } } 
-      },
-      { new: true } // Updated profile return karega
-    );
-
-    if (!profile) {
-      return res.status(404).json({ success: false, message: "Profile not found" });
+    
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "Unauthorized. Please login first." 
+      });
     }
 
-    res.status(200).json({ 
-      success: true, 
-      message: "Award deleted successfully",
-      data: itemId // Frontend ko ID wapas bhejte hain state filter karne ke liye
-    });
+    const result = await deleteItemFromSection(userId, "awardsAchievements", itemId);
+    res.status(result.success ? 200 : 400).json(result);
 
   } catch (err) {
     console.error("Delete Error:", err);
@@ -815,30 +806,19 @@ export const deleteAwardController = async (req, res) => {
 // controller.js
 export const updateAwardController = async (req, res) => {
   try {
+     const userId = req.user?._id || req.user?.id;
     const { itemId } = req.params;
-    const userId = req.user?.id;
     
-    // Sirf wahi fields nikalein jo update karni hain
-    const { title, issuer, date, description } = req.body;
-    let updateData = { title, issuer, date, description };
-
-    if (req.file) {
-      updateData.media = req.file.path || req.file.secure_url;
+    if (!userId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "Unauthorized. Please login first." 
+      });
     }
 
-    const profile = await Profile.findOneAndUpdate(
-      { user: userId, "awardsAchievements._id": itemId },
-      { 
-        $set: { 
-          "awardsAchievements.$": { ...updateData, _id: itemId } 
-        } 
-      },
-      { new: true }
-    );
+    const result = await updateItemInSection(userId, "awardsAchievements", itemId, req.body);
+    res.status(result.success ? 200 : 400).json(result);
 
-    if (!profile) return res.status(404).json({ success: false, message: "Item not found" });
-
-    res.status(200).json({ success: true, data: profile.awardsAchievements.id(itemId) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "Server error during update" });
