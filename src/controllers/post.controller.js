@@ -17,7 +17,6 @@ import { MSG } from "../constants/messages.js";
 
 export const createPost = async (req, res) => {
   try {
-    console.log(req.body);
 const { error, value } = createPostValidation.validate(req.body, {
   abortEarly: false,
   stripUnknown: true,

@@ -141,6 +141,51 @@ export const createOrUpdateProfile = async (userId, profileData) => {
   }
 };
 
+export const updateContactInfoService = async (userId, contactInfo) => {
+  return await Profile.findOneAndUpdate(
+    { userId },
+    { $set: { contactInfo } },
+    { new: true, runValidators: true }
+  
+  );
+};
+
+export const updateProfileMedia = async (userId, files) => {
+  try {
+    const updateData = {};
+
+   // ⚠️ Nesting the paths to match your personalInfo structure
+    if (files.profileImage && files.profileImage[0]) {
+      updateData["personalInfo.profileImage"] = files.profileImage[0].path; 
+    }
+
+    if (files.profileCover && files.profileCover[0]) {
+      updateData["personalInfo.profileCover"] = files.profileCover[0].path;
+    }
+
+    // 3. Database Update
+    const updatedProfile = await Profile.findOneAndUpdate(
+      { userId },
+      { $set: updateData },
+      { new: true }
+    );
+
+    if (!updatedProfile) {
+      return { success: false, message: "Profile not found" };
+    }
+
+    return {
+      success: true,
+      message: "Media updated successfully",
+      data: updatedProfile
+    };
+  } catch (error) {
+    console.error("Service Error:", error);
+    return { success: false, message: error.message };
+  }
+};
+
+
 export const getProfileByUserId = async (userId) => {
   try {
     const profile = await Profile.findOne({ userId }).populate("userId", "userName email firstName lastName profileImage ");

@@ -9,6 +9,7 @@ import {
   updateArrayField,
   deleteProfile,
 } from "../services/profile.service.js";
+import  Profile  from '../models/profile.model.js';
 import {
   createProfileValidation,
   updateProfileValidation,
@@ -31,7 +32,7 @@ import {
 } from "../validations/profile.validation.js";
 import { MSG } from "../constants/messages.js";
 import User from "../models/user.model.js";
-
+import { updateContactInfoService, updateProfileMedia  } from "../services/profile.service.js";
 
 import {
   addWorkExperienceValidation,
@@ -145,6 +146,40 @@ export const createOrUpdateProfileController = async (req, res) => {
     });
   }
 };
+
+export const updateContactInfo = async (req, res) => {
+  try {
+    const profile = await updateContactInfoService(
+      req.user._id,
+      req.body.contactInfo
+    );
+
+    res.json({ success: true, contactInfo: profile.contactInfo });
+  } catch (e) {
+    res.status(400).json({ success: false, message: e.message });
+  }
+};
+
+
+
+export const updateProfileMediaController = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const files = req.files; // Multer multiple fields parse karega
+
+    if (!files || Object.keys(files).length === 0) {
+      return res.status(400).json({ success: false, message: "No files uploaded" });
+    }
+console.log("Uploaded files:", files);
+    const result = await updateProfileMedia(userId, files);
+console.log("Uploaded files:", result);
+
+    res.status(result.success ? 200 : 400).json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 
 export const getProfileController = async (req, res) => {
   try {
@@ -608,39 +643,8 @@ export const updateSkillsController = async (req, res) => {
   }
 };
 
-// 2. Interests Controller
-// 1. Define this Helper Function at the top of the file
-// const updateArrayField = async (userId, field, items) => {
-//   try {
-//     const updatedProfile = await Profile.findOneAndUpdate(
-//       { userId },
-//       { 
-//         $set: { 
-//           [field]: items, 
-//           lastUpdated: new Date() 
-//         } 
-//       },
-//       { 
-//         new: true, 
-//         runValidators: false, // 🔥 This prevents the crash caused by empty certificates
-//         upsert: true 
-//       }
-//     );
 
-//     if (!updatedProfile) return { success: false, message: "Profile not found" };
 
-//     return {
-//       success: true,
-//       message: `${field} updated successfully`,
-//       data: updatedProfile[field],
-//     };
-//   } catch (error) {
-//     console.error(`Database Error in ${field}:`, error.message);
-//     return { success: false, message: error.message };
-//   }
-// };
-
-// 2. Update the Interests Controller to use the helper
 export const updateInterestsController = async (req, res) => {
   try {
     const userId = req.user?.id;

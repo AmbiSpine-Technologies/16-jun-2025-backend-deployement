@@ -75,13 +75,17 @@ const personalInfoSchema = Joi.object({
   lastName: Joi.string().min(2).required(),
   headline: Joi.string().allow(""),
   email: Joi.string().email().required(),
-  phone: Joi.string().allow(""),
+  phone: Joi.array()
+  .items(Joi.string().pattern(/^[0-9+\-\s()]*$/))
+  .max(3),
   country: Joi.string().allow(""),
   state: Joi.string().allow(""),
   city: Joi.string().allow(""),
   address: Joi.string().allow(""),
   location: Joi.string().allow(""),
   preferredLanguage: Joi.string().allow(""),
+  profileImage: Joi.string().allow("").optional(),
+  profileCover: Joi.string().allow("").optional(),
   dateOfBirth: Joi.string().allow(""),
   userName:  Joi.string().allow(""),
   gender: Joi.string().valid("Male", "Female", "Others", "").allow(""),
@@ -164,7 +168,6 @@ export const createProfileValidation = Joi.object({
   certificates: Joi.array().items(certificateSchema).default([]),
   publications: Joi.array().items(publicationSchema).default([]),
   awardsAchievements: Joi.array().items(awardAchievementSchema).default([]),
-  profileImage: Joi.string().allow(""),
 });
 
 export const updateProfileValidation = Joi.object({
@@ -200,7 +203,8 @@ interests: Joi.array()
   jobAlertPreferences: jobAlertPreferencesSchema.optional(),
   recentExperience: recentExperienceSchema.optional(),
   interestsAndPreferences: interestsAndPreferencesSchema.optional(),
-  profileImage: Joi.string().allow("").optional(),
+
+  
 }).unknown(false); // Explicitly reject unknown fields
 
 

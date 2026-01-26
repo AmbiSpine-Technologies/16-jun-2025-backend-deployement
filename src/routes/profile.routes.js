@@ -27,7 +27,7 @@ import {
   deleteCertificateItemController,
   addAwardController,
   deleteAwardController,
-
+updateProfileMediaController,
   updateLearningJourneyController,
   updateCareerExpectationsController,
   updateJobAlertPreferencesController,
@@ -38,12 +38,14 @@ import {
   updatePublicationItemController,
   deletePublicationItemController,
   updateAwardController,
+  updateContactInfo,
 } from "../controllers/profile.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { upload } from "../utils/upload.js"
 const router = express.Router();
 
 router.get("/username/:username", getProfileByUsernameController);
+router.put("/contact", authMiddleware, updateContactInfo);
 
 router.use(authMiddleware);
 
@@ -58,6 +60,11 @@ router.put("/personal-info", updatePersonalInfoController);
 router.put("/profile-summary", updateProfileSummaryController);
 
 router.put("/social-links", updateSocialLinksController);
+
+router.put("/media", authMiddleware, upload.fields([
+  { name: 'profileImage', maxCount: 1 },
+  { name: 'profileCover', maxCount: 1 }
+]), updateProfileMediaController);
 
 router.put("/work-experience", updateWorkExperienceController);
 router.post("/work-experience", addWorkExperienceController);

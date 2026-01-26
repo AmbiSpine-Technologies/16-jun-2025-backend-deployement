@@ -70,6 +70,63 @@ const awardAchievementSchema = new mongoose.Schema({
   hidden: { type: Boolean, default: false },
 }, { _id: true });
 
+const phoneSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      enum: ["Home", "Work"],
+      default: "Home",
+    },
+    countryCode: {
+      type: String,
+      default: "+91",
+    },
+    number: {
+      type: String,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
+const contactInfoSchema = new mongoose.Schema(
+  {
+    phones: {
+      type: [phoneSchema],
+      validate: {
+        validator: (arr) => arr.length <= 3,
+        message: "Maximum 3 phone numbers allowed",
+      },
+      default: [],
+    },
+
+    email: {
+      type: String,
+      trim: true,
+      lowercase: true,
+    },
+
+    address: {
+      type: String,
+      maxlength: 250,
+      default: "",
+    },
+
+    location: {
+      type: String,
+      default: "",
+    },
+
+    locationVisibility: {
+      type: String,
+      enum: ["private", "public"],
+      default: "private",
+    },
+  },
+  { _id: false }
+);
+
+
 const profileSchema = new mongoose.Schema(
   {
     userId: {
@@ -85,19 +142,30 @@ const profileSchema = new mongoose.Schema(
       headline: { type: String, default: "" }, 
       email: { type: String, required: true, trim: true, lowercase: true },
       userName: { type: String, required: true, trim: true,},
-      phone: { type: String, default: "" },
+      phone: {
+    type: [String],
+    validate: {
+      validator: function (arr) {
+        return arr.length <= 3;
+      },
+      message: "Maximum 3 phone numbers allowed"
+    },
+    default: []
+  },
       country: { type: String, default: "" },
       state: { type: String, default: "" },
       city: { type: String, default: "" },
       address: { type: String, default: "" },
       location: { type: String, default: "" }, 
       preferredLanguage: { type: String, default: "" },
+    profileImage: { type: String, default: "" },
+    profileCover: { type: String, default: "" },
       dateOfBirth: { type: String, default: "" }, 
       gender: { type: String, enum: ["Male", "Female", "Others", ""], default: "" },
       journeyType: { type: String, enum: ["Student", "Professional / Jobseeker", "Recruiter", 
         "TPO", ""], default: "" }, // What defines your journey
     },
-
+    contactInfo: contactInfoSchema,
     socialLinks: [socialLinkSchema],
 
     profileSummary: { type: String, default: "" },
@@ -193,7 +261,7 @@ languages: [
       professionalIntent: { type: String, default: "" },
     },
 
-    profileImage: { type: String, default: "" },
+  
     lastUpdated: { type: Date, default: Date.now },
   },
   { timestamps: true }

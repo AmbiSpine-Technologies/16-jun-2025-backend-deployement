@@ -20,29 +20,6 @@ const documentDir = path.join(uploadsDir, "documents");
   }
 });
 
-// Storage configuration
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     let uploadPath = uploadsDir;
-
-//     if (file.fieldname === "image" || file.mimetype.startsWith("image/")) {
-//       uploadPath = imageDir;
-//     } else if (file.fieldname === "video" || file.mimetype.startsWith("video/")) {
-//       uploadPath = videoDir;
-//     } else if (file.fieldname === "document" || file.mimetype.includes("pdf") || file.mimetype.includes("document")) {
-//       uploadPath = documentDir;
-//     }
-
-//     cb(null, uploadPath);
-//   },
-//   filename: (req, file, cb) => {
-//     // Generate unique filename: timestamp-randomnumber-originalname
-//     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-//     const ext = path.extname(file.originalname);
-//     const name = path.basename(file.originalname, ext);
-//     cb(null, `${name}-${uniqueSuffix}${ext}`);
-//   },
-// });
 
 const storage = new CloudinaryStorage({
   cloudinary,
