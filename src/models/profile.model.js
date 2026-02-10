@@ -143,14 +143,14 @@ const profileSchema = new mongoose.Schema(
       email: { type: String, required: true, trim: true, lowercase: true },
       userName: { type: String, required: true, trim: true,},
       phone: {
-    type: [String],
-    validate: {
-      validator: function (arr) {
-        return arr.length <= 3;
+      type: [String],
+      validate: {
+        validator: function (arr) {
+          return arr.length <= 3;
+        },
+        message: "Maximum 3 phone numbers allowed"
       },
-      message: "Maximum 3 phone numbers allowed"
-    },
-    default: []
+      default: []
   },
       country: { type: String, default: "" },
       state: { type: String, default: "" },
@@ -158,8 +158,8 @@ const profileSchema = new mongoose.Schema(
       address: { type: String, default: "" },
       location: { type: String, default: "" }, 
       preferredLanguage: { type: String, default: "" },
-    profileImage: { type: String, default: "" },
-    profileCover: { type: String, default: "" },
+      profileImage: { type: String, default: "" },
+      profileCover: { type: String, default: "" },
       dateOfBirth: { type: String, default: "" }, 
       gender: { type: String, enum: ["Male", "Female", "Others", ""], default: "" },
       journeyType: { type: String, enum: ["Student", "Professional / Jobseeker", "Recruiter", 
@@ -234,7 +234,7 @@ languages: [
         max: { type: Number, default: null },
         currency: { type: String, default: "USD" },
       },
-      recruitvisibility: { type: Boolean, default: false },
+      recruitvisibility: { type: Boolean, default: true },
     },
 
     recentExperience: {

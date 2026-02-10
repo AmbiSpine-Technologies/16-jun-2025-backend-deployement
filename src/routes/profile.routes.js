@@ -27,7 +27,7 @@ import {
   deleteCertificateItemController,
   addAwardController,
   deleteAwardController,
-updateProfileMediaController,
+  updateProfileMediaController,
   updateLearningJourneyController,
   updateCareerExpectationsController,
   updateJobAlertPreferencesController,

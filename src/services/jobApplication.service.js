@@ -103,11 +103,18 @@ export const createJobApplicationService = async (jobId, userId, data) => {
         message: "Job not found",
       };
     }
+      const profile = await Profile.findOne({ userId });
 
+      if (!profile) {
+      return {
+        success: false,
+        message: "Profile not found. Please complete your profile first.",
+      };
+    }
     // Check if user already applied
     const existing = await JobApplication.findOne({
       job: jobId,
-      applicant: userId,
+      applicant: profile._id,
     });
 
     if (existing) {
@@ -120,10 +127,9 @@ export const createJobApplicationService = async (jobId, userId, data) => {
     // Calculate match score based on user profile and job requirements
     let matchScore = 0;
     try {
-      const profile = await Profile.findOne({ userId }).lean();
-      if (profile) {
-        matchScore = calculateMatchScore(profile, job);
-      }
+    
+        matchScore = calculateMatchScore(profile.toObject(), job);
+      
     } catch (error) {
       console.error("Error calculating match score:", error);
       // Continue with default score (0)
@@ -131,7 +137,7 @@ export const createJobApplicationService = async (jobId, userId, data) => {
 
     const application = await JobApplication.create({
       job: jobId,
-      applicant: userId,
+      applicant: profile._id,
       resume: data.resume || null,
       resumeUrl: data.resumeUrl || "",
       coverLetter: data.coverLetter || "",
@@ -150,7 +156,7 @@ export const createJobApplicationService = async (jobId, userId, data) => {
 
     const populatedApplication = await JobApplication.findById(application._id)
       .populate("job", "title company location")
-      .populate("applicant", "firstName lastName userName email profileImage")
+      .populate("applicant")
       .populate("resume")
       .lean();
 
@@ -242,7 +248,8 @@ export const getJobApplicationsService = async (jobId, userId, filters = {}, pag
 
     // Fetch applications and populate applicant data including isPremium
     const applications = await JobApplication.find(query)
-      .populate("applicant", "firstName lastName userName email profileImage isPremium")
+      // .populate("applicant", "firstName lastName userName email profileImage isPremium")
+      .populate("applicant")
       .populate("resume")
       .lean();
 

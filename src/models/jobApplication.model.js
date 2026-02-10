@@ -10,7 +10,7 @@ const jobApplicationSchema = new mongoose.Schema(
     },
     applicant: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Profile",
       required: true,
       index: true,
     },
@@ -24,9 +24,9 @@ const jobApplicationSchema = new mongoose.Schema(
       default: "",
     },
     experience: { type: String },
-  currentCtc: { type: String },
-  expectedCtc: { type: String },
-  noticePeriod: { type: String },
+    currentCtc: { type: String },
+    expectedCtc: { type: String },
+    noticePeriod: { type: String },
     coverLetter: {
       type: String,
       default: "",
@@ -68,6 +68,7 @@ const jobApplicationSchema = new mongoose.Schema(
       max: 100,
     }, // Match score between applicant profile and job requirements
   },
+ 
   {
     timestamps: true,
   }

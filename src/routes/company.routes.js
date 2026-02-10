@@ -7,6 +7,7 @@ import {
   getMyCompanies,
   getAllCompanies,
   getCompanySuggestions,
+  getAllWithoutFilterCompanies,
 } from "../controllers/company.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { upload } from '../utils/upload.js';
@@ -14,6 +15,7 @@ const router = express.Router();
 
 // Public routes (no auth required)
 router.get("/all", getAllCompanies);
+router.get("/all-without-filter", getAllWithoutFilterCompanies);
 router.get("/suggestions", authMiddleware, getCompanySuggestions);
 
 router.get("/:id", getCompanyById);

@@ -13,6 +13,7 @@ import {
 } from "../services/job.service.js";
 import { MSG } from "../constants/messages.js";
 
+import { requestCompanyEmailOTP, verifyOTP } from "../services/otp.service.js";
 // Create a new job
 export const createJob = async (req, res) => {
   try {
@@ -34,6 +35,53 @@ export const createJob = async (req, res) => {
     });
   }
 };
+
+
+export const requestVerification = async (req, res) => {
+  try {
+    const { email, companyName } = req.body;
+    
+    if (!email || !companyName) {
+      return res.status(400).json({ success: false, message: "Email and Company Name are required" });
+    }
+
+    const result = await requestCompanyEmailOTP(email, companyName);
+    
+    if (result.success) {
+      return res.status(200).json(result);
+    } else {
+      return res.status(500).json(result);
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error while sending OTP" });
+  }
+};
+
+// Step 2: Sirf OTP check karta hai
+export const validateOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ success: false, message: "Email and OTP are required" });
+    }
+
+    // Aapki existing verifyOTP service use kar rahe hain
+    const verification = await verifyOTP(email, otp);
+
+    if (verification.success) {
+      return res.status(200).json({ 
+        success: true, 
+        message: "Email verified successfully!" 
+      });
+    } else {
+      return res.status(400).json(verification);
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error during verification" });
+  }
+};
+
 
 // Get all jobs with filters and pagination
 export const getAllJobs = async (req, res) => {
@@ -156,6 +204,7 @@ export const deleteJob = async (req, res) => {
     });
   }
 };
+
 
 // Get jobs posted by logged-in user
 export const getMyJobs = async (req, res) => {

@@ -56,7 +56,6 @@ export const updateJobValidation = Joi.object({
     .valid("Startup", "Mid-size", "Large", "Enterprise")
     .optional(),
   industry: Joi.string()
-    .valid("Technology", "Finance", "Healthcare", "E-commerce", "Other")
     .optional(),
   isFeatured: Joi.boolean().optional(),
   isActive: Joi.boolean().optional(),

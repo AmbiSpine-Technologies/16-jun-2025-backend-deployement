@@ -1,6 +1,8 @@
 import Company from "../models/company.model.js";
 import { MSG } from "../constants/messages.js";
 import Profile from "../models/profile.model.js"
+import College from "../models/college.model.js";
+import Connection from '../models/connection.model.js'
 export const createCompanyService = async (companyData, userId) => {
   try {
     
@@ -180,6 +182,27 @@ export const getMyCompaniesService = async (userId, pagination = {}) => {
   }
 };
 
+
+export const getAllWithoutFilterCompaniesService = async () => {
+  try {
+    const companies = await Company.find({}) // ❌ koi filter nahi
+      .populate("createdBy", "userName email firstName lastName")
+      .populate("admins", "userName email firstName lastName")
+      .sort({ createdAt: -1 });
+
+    return {
+      success: true,
+      message: MSG.COMPANY?.FETCH_ALL_SUCCESS || "All companies fetched successfully",
+      data: companies,
+      count: companies.length,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+
+
+
 export const getAllCompaniesService = async (filters = {}, pagination = {}) => {
   try {
     const { search, industry, location, isVerified } = filters;
@@ -242,17 +265,23 @@ export const getAllCompaniesService = async (filters = {}, pagination = {}) => {
   }
 };
 
+
 // src/services/company.service.js
 export const getCompanySuggestionsService = async (userId, limit = 10) => {
   try {
     const profile = await Profile.findOne({ userId }).lean();
 
-    let followedCompanies = [];
+    // Just like in Friend Suggestions, we check who the user is already following
+    const following = await Connection.find({ follower: userId }).select("following");
+    
+    // Create a list of IDs (Users + Companies) that are already followed
+    const followingIds = following.map((c) => c.following.toString());
+
     let scoredResults = [];
 
     // Only run scoring logic if profile exists
     if (profile) {
-      followedCompanies = profile.followedCompanies || [];
+      // followedCompanies = profile.followedCompanies || [];
 
       const industryPref = profile.careerExpectations?.industry;
       const locationPref = profile.jobAlertPreferences?.locationPreference;
@@ -260,7 +289,7 @@ export const getCompanySuggestionsService = async (userId, limit = 10) => {
 
       const companies = await Company.find({
         isActive: true,
-        _id: { $nin: followedCompanies },
+        _id: { $nin: followingIds },
       }).select("name logo tagline industry orgType location followers isVerified createdAt").lean();
 
       const scored = companies.map((company) => {
@@ -279,11 +308,13 @@ export const getCompanySuggestionsService = async (userId, limit = 10) => {
     // 6️⃣ Fallback (Runs if no profile OR not enough scored results)
     if (scoredResults.length < limit) {
       const usedIds = scoredResults.map((r) => r.company._id);
+      const excludeIds = [...followingIds, ...usedIds];
+
       const fallback = await Company.find({
         isActive: true,
-        _id: { $nin: [...followedCompanies, ...usedIds] },
+        _id: { $nin: excludeIds },
       })
-        .sort({ followers: -1 })
+        .sort({ followers: -1 }) // Show popular companies
         .limit(limit - scoredResults.length)
         .lean();
 

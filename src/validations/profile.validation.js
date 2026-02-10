@@ -122,7 +122,7 @@ const jobAlertPreferencesSchema = Joi.object({
     max: Joi.number().allow(null),
     currency: Joi.string().default("USD"),
   }).optional(),
-   recruitvisibility: Joi.boolean().default(false),
+   recruitvisibility: Joi.boolean().default(true),
 });
 
 const recentExperienceSchema = Joi.object({

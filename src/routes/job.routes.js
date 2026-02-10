@@ -8,6 +8,7 @@ import {
   getMyJobs,
   getFeaturedJobs,
   toggleJobStatus,
+  requestVerification, validateOTP,
 } from "../controllers/job.controller.js";
 import {
   createJobApplication,
@@ -19,6 +20,7 @@ import {
 } from "../controllers/jobApplication.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { upload } from "../utils/upload.js";
+
 const router = express.Router();
 
 // Public routes (no auth required)
@@ -32,6 +34,8 @@ router.get("/my/jobs", authMiddleware, getMyJobs);
 router.put("/update/:id", authMiddleware, updateJob);
 router.delete("/delete/:id", authMiddleware, deleteJob);
 router.patch("/toggle-status/:id", authMiddleware, toggleJobStatus);
+router.post("/send-verification-otp", requestVerification);
+router.post("/verify-otp-and-post", validateOTP);
 
 // Job Applications routes
 router.post("/:id/apply", authMiddleware, upload.single("resume"), createJobApplication);

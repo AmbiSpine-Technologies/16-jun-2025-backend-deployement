@@ -1,7 +1,6 @@
 import Profile from "../models/profile.model.js";
 import User from "../models/user.model.js";
 import Connection from "../models/connection.model.js";
-import { MSG } from "../constants/messages.js";
 
 export const createOrUpdateProfile = async (userId, profileData) => {
   try {
@@ -12,7 +11,7 @@ export const createOrUpdateProfile = async (userId, profileData) => {
         message: "User not found",
       };
     }
-          let profile = await Profile.findOne({ userId });
+    let profile = await Profile.findOne({ userId });
     // Debug: Log received data
     console.log("📥 Received profile data:", JSON.stringify(profileData, null, 2));
 
@@ -188,7 +187,7 @@ export const updateProfileMedia = async (userId, files) => {
 
 export const getProfileByUserId = async (userId) => {
   try {
-    const profile = await Profile.findOne({ userId }).populate("userId", "userName email firstName lastName profileImage ");
+    const profile = await Profile.findOne({ userId }).populate("userId", "userName email firstName lastName ");
     
     if (!profile) {
       return {

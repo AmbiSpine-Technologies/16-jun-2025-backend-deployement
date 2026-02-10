@@ -12,13 +12,13 @@ export const registerValidation = Joi.object({
         "Username 3-20 characters ka hona chahiye, letter se start hona chahiye, aur usmein lagatar do dots ya underscores nahi hone chahiye."
     }),
   email: Joi.string().email().required(),
-  password: Joi.string().min(6).required(),
-  confirmPassword: Joi.valid(Joi.ref("password")).required(),
+  password: Joi.string().min(6).optional(),
+  confirmPassword: Joi.valid(Joi.ref("password")).optional(),
   isEmailVerified: Joi.boolean().optional()
 });
 
 export const loginValidation = Joi.object({
-  identifier: Joi.string().required(),
-  password: Joi.string().required(),
+  identifier: Joi.string().optional(),
+  password: Joi.string().optional(),
   rememberMe: Joi.boolean().optional()
 });

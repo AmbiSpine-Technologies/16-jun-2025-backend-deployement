@@ -3,7 +3,8 @@ import User from "../models/user.model.js";
 import Job from "../models/job.model.js";
 import Community from "../models/community.model.js";
 import Profile from "../models/profile.model.js";
-
+import Company from "../models/company.model.js";
+import College from "../models/college.model.js";
 // Global search
 export const globalSearchService = async (query, filters = {}, page = 1, limit = 10) => {
   try {
@@ -13,21 +14,51 @@ export const globalSearchService = async (query, filters = {}, page = 1, limit =
       posts: [],
       jobs: [],
       communities: [],
+      companies: [], // New
+      colleges: [],  // New
     };
 
     // Search users
     if (!filters.type || filters.type === "users") {
-      const users = await User.find({
+      const users = await Profile.find({
         $or: [
-          { firstName: { $regex: query, $options: "i" } },
-          { lastName: { $regex: query, $options: "i" } },
-          { userName: { $regex: query, $options: "i" } },
+          { "personalInfo.firstName": { $regex: query, $options: "i" } },
+          { "personalInfo.lastName": { $regex: query, $options: "i" } },
+          { "personalInfo.userName": { $regex: query, $options: "i" } },
         ],
       })
-        .select("firstName lastName userName email profileImage")
+        .select("personalInfo.firstName personalInfo.lastName personalInfo.email personalInfo.userName  personalInfo.profileImage personalInfo.headline ")
         .limit(limit)
         .lean();
       results.users = users;
+    }
+
+    // 2. Search Companies
+    if (!filters.type || filters.type === "companies") {
+      results.companies = await Company.find({
+        $or: [
+          { name: { $regex: query, $options: "i" } },
+          { industry: { $regex: query, $options: "i" } }
+        ],
+        isActive: true
+      })
+      .select("name logo tagline industry location followers")
+      .limit(limit)
+      .lean();
+    }
+
+    // 3. Search Colleges
+    if (!filters.type || filters.type === "colleges") {
+      results.colleges = await College.find({
+        $or: [
+          { name: { $regex: query, $options: "i" } },
+          { city: { $regex: query, $options: "i" } }
+        ],
+        isActive: true
+      })
+      .select("name logo tagline type city followers")
+      .limit(limit)
+      .lean();
     }
 
     // Search posts
@@ -93,7 +124,7 @@ export const searchUsersService = async (query, page = 1, limit = 20) => {
         { email: { $regex: query, $options: "i" } },
       ],
     })
-      .select("firstName lastName userName email profileImage")
+      .select("firstName lastName userName email profileImage headline")
       .skip(skip)
       .limit(limit)
       .lean();
@@ -271,7 +302,67 @@ export const searchCommunitiesService = async (query, filters = {}, page = 1, li
 
 
 
+// Search Colleges Service
+export const searchCollegesService = async (query, page = 1, limit = 20) => {
+  try {
+    const skip = (page - 1) * limit;
+    const searchQuery = {
+      $or: [
+        { name: { $regex: query, $options: "i" } },
+        { city: { $regex: query, $options: "i" } },
+        { description: { $regex: query, $options: "i" } }
+      ],
+      isActive: true
+    };
 
+    const colleges = await College.find(searchQuery)
+      .skip(skip)
+      .limit(limit)
+      .sort({ followers: -1 })
+      .lean();
+
+    const total = await College.countDocuments(searchQuery);
+
+    return {
+      success: true,
+      data: colleges,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) }
+    };
+  } catch (error) {
+    return { success: false, message: "Failed to search colleges", error: error.message };
+  }
+};
+
+// Search Companies Service
+export const searchCompaniesService = async (query, page = 1, limit = 20) => {
+  try {
+    const skip = (page - 1) * limit;
+    const searchQuery = {
+      $or: [
+        { name: { $regex: query, $options: "i" } },
+        { industry: { $regex: query, $options: "i" } },
+        { location: { $regex: query, $options: "i" } }
+      ],
+      isActive: true
+    };
+
+    const companies = await Company.find(searchQuery)
+      .skip(skip)
+      .limit(limit)
+      .sort({ followers: -1 })
+      .lean();
+
+    const total = await Company.countDocuments(searchQuery);
+
+    return {
+      success: true,
+      data: companies,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) }
+    };
+  } catch (error) {
+    return { success: false, message: "Failed to search companies", error: error.message };
+  }
+};
 
 
 

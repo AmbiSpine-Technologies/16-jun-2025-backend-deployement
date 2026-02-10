@@ -275,3 +275,48 @@ export const verifyOTP = async (email, otp) => {
   
   return { success: false, message: "Invalid OTP" };
 };
+
+
+export const requestCompanyEmailOTP = async (email, companyName) => {
+  const otp = Math.floor(100000 + Math.random() * 900000);
+  
+  // Store OTP and Expiry
+  otpStore[email] = otp;
+  otpStore[`${email}_expiry`] = Date.now() + 10 * 60 * 1000;
+
+  const mailOptions = {
+    from: `"SpreadNext Hiring" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: `${otp} is your verification code`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 style="color: #0013E3;">SpreadNext</h2>
+        </div>
+        <p>Hello,</p>
+        <p>To confirm you work with <strong>${companyName}</strong> and finish posting your job, please use the following verification code:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #0013E3; background: #f0f2ff; padding: 10px 20px; border-radius: 5px; border: 1px dashed #0013E3;">
+            ${otp}
+          </span>
+        </div>
+        <p style="font-size: 12px; color: #666;">This code will expire in 10 minutes. If you did not request this, please ignore this email.</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+        <p style="font-size: 11px; color: #999; text-align: center;">© 2026 SpreadNext. All rights reserved.</p>
+      </div>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return { success: true, message: "Verification code sent to company email" };
+  } catch (error) {
+    console.error("❌ Company OTP Error:", error);
+    // Development fallback (aapke existing code ki tarah)
+    if (process.env.NODE_ENV !== 'production') {
+      return { success: true, message: "Dev Mode: OTP is " + otp, devOtp: otp };
+    }
+    return { success: false, message: "Failed to send email" };
+  }
+};
+

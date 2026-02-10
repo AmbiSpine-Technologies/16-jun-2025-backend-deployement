@@ -1,5 +1,5 @@
 import { registerValidation, loginValidation } from "../validations/user.validation.js";
-import { registerService, loginService } from "../services/auth.service.js";
+import { registerService, loginService, googleOAuthService } from "../services/auth.service.js";
 import { MSG } from "../constants/messages.js";
 import User from "../models/user.model.js";
 
@@ -38,20 +38,75 @@ export const loginUser = async (req, res) => {
 };
 
 
+export const googleOAuthController = async (req, res) => {
+  try {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      return res.status(400).json({
+        success: false,
+        message: "Token missing",
+      });
+    }
+
+    const result = await googleOAuthService(idToken);
+    console.log(result);
+    return res.status(200).json(result);
+
+  } catch (err) {
+    console.error("Google OAuth controller error:", err.message);
+    return res.status(401).json({
+      success: false,
+      message: "Google authentication failed",
+    });
+  }
+};
+
+
+// export const getAllUsersController = async (req, res) => {
+//   try {
+//     const users = await User.find(
+//       {},
+//       "firstName lastName userName email profileImage profileCover "
+//     );
+
+//     res.status(200).json({
+//       success: true,
+//       count: users.length,
+//       users,
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch users",
+//     });
+//   }
+// };
 
 export const getAllUsersController = async (req, res) => {
   try {
-    const users = await User.find(
-      {},
-      "firstName lastName userName email profileImage"
-    );
+    const users = await User.aggregate([
+      {
+        $lookup: {
+          from: "profiles",          // collection name
+          localField: "_id",
+          foreignField: "userId",
+          as: "profile",
+        },
+      },
+      {
+        $unwind: {
+          path: "$profile",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+    ]);
 
     res.status(200).json({
       success: true,
-      count: users.length,
       users,
     });
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({
       success: false,
       message: "Failed to fetch users",

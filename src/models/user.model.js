@@ -7,12 +7,23 @@ const userSchema = new mongoose.Schema(
     mobileNo: { type: String, required: false, unique: true, sparse: true },
     userName: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true, lowercase: true },
-    password: { type: String, required: true },
+    password: {
+  type: String,
+  required: function () {
+    return this.authProvider === "local";
+  },
+},
     rememberMe: { type: Boolean, default: false },
     mobileVerified: { type: Boolean, default: false },
     emailVerified: { type: Boolean, default: false },
     otp: { type: String },
     otpExpires: { type: Date },
+    firebaseUid: { type: String },
+authProvider: {
+  type: String,
+  enum: ["local", "google"],
+  default: "local",
+},
     isPremium: { type: Boolean, default: false } // Premium membership status
   },
   { 

@@ -6,6 +6,7 @@ import {
   deleteCompanyService,
   getMyCompaniesService,
   getAllCompaniesService,
+  getAllWithoutFilterCompaniesService,
 } from "../services/company.service.js";
 import { MSG } from "../constants/messages.js";
 
@@ -155,26 +156,21 @@ export const getAllCompanies = async (req, res) => {
 };
 
 
+export const getAllWithoutFilterCompanies = async (req, res) => {
+  try {
+    const result = await getAllWithoutFilterCompaniesService();
+
+    return res.status(200).json(result);
+  } catch (err) {
+    console.error("GET ALL COMPANIES WITHOUT FILTER ERROR:", err);
+    return res.status(500).json({
+      success: false,
+      message: MSG.ERROR.SERVER_ERROR,
+    });
+  }
+};
+
 // get suggestion company
-// export const getCompanySuggestions = async (req, res) => {
-//   try {
-//     const limit = parseInt(req.query.limit) || 10;
-
-//     const result = await getCompanySuggestionsService(req.user._id, limit);
-
-//     if (!result.success) {
-//       return res.status(400).json(result);
-//     }
-
-//     res.status(200).json(result);
-//   } catch (error) {
-//     console.error("GET COMPANY SUGGESTIONS ERROR:", error);
-//     res.status(500).json({
-//       success: false,
-//       message: "Failed to fetch company suggestions",
-//     });
-//   }
-// };
 
 
 export const getCompanySuggestions = async (req, res) => {
