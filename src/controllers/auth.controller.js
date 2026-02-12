@@ -1,5 +1,5 @@
 import { registerValidation, loginValidation } from "../validations/user.validation.js";
-import { registerService, loginService, googleOAuthService } from "../services/auth.service.js";
+import { registerService, loginService, googleOAuthService, googleSignupService, googleLoginService   } from "../services/auth.service.js";
 import { MSG } from "../constants/messages.js";
 import User from "../models/user.model.js";
 
@@ -62,6 +62,51 @@ export const googleOAuthController = async (req, res) => {
   }
 };
 
+export const googleSignupController = async (req, res) => {
+  try {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      return res.status(400).json({
+        success: false,
+        message: "Token missing",
+      });
+    }
+
+    const result = await googleSignupService(idToken);
+    return res.status(200).json(result);
+
+  } catch (err) {
+    console.error("Google Signup controller error:", err.message);
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const googleLoginController = async (req, res) => {
+  try {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      return res.status(400).json({
+        success: false,
+        message: "Token missing",
+      });
+    }
+
+    const result = await googleLoginService(idToken);
+    return res.status(200).json(result);
+
+  } catch (err) {
+    console.error("Google Login controller error:", err.message);
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
 
 // export const getAllUsersController = async (req, res) => {
 //   try {

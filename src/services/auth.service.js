@@ -264,3 +264,72 @@ export const googleOAuthService = async (idToken) => {
     throw err;
   }
 };
+
+
+export const googleSignupService = async (idToken) => {
+  const decoded = await admin.auth().verifyIdToken(idToken);
+  const { email, name, picture, uid } = decoded;
+
+  const existingUser = await User.findOne({ email });
+
+  if (existingUser) {
+    throw new Error("User already exists. Please login.");
+  }
+
+  const username = await generateUniqueUsername(email);
+
+  const user = await User.create({
+    email,
+    userName: username,
+    firebaseUid: uid,
+    authProvider: "google",
+    firstName: name?.split(" ")[0] || "",
+    lastName: name?.split(" ").slice(1).join(" ") || "",
+    emailVerified: true,
+    onboardingCompleted: false,
+  });
+
+ const  profile =  await Profile.create({
+    userId: user._id,
+    personalInfo: {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email,
+      userName: username,
+      profileImage: picture || "",
+    },
+  });
+
+  return {
+    success: true,
+    token: generateToken(user._id),
+     loginUser: profile,
+  };
+};
+
+export const googleLoginService = async (idToken) => {
+  const decoded = await admin.auth().verifyIdToken(idToken);
+  const { email, uid } = decoded;
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new Error("User not found. Please signup first.");
+  }
+
+
+  // Attach firebase UID if missing
+  if (!user.firebaseUid) {
+    user.firebaseUid = uid;
+    user.authProvider = "google";
+    user.emailVerified = true;
+    await user.save();
+  }
+const profile = await Profile.findOne({ userId: user._id });
+
+  return {
+    success: true,
+    token: generateToken(user._id),
+    loginUser: profile,
+  };
+};
