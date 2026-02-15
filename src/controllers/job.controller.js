@@ -10,6 +10,7 @@ import {
   deleteJobService,
   getMyJobsService,
   getFeaturedJobsService,
+  getMyJobsAppliedService,
 } from "../services/job.service.js";
 import { MSG } from "../constants/messages.js";
 
@@ -228,6 +229,32 @@ export const getMyJobs = async (req, res) => {
     });
   }
 };
+
+
+// Get jobs posted by logged-in user
+export const getJobsAppliedController = async (req, res) => {
+  try {
+    
+    const { page, limit, sortBy, order } = req.query;
+
+    const pagination = {
+      page: page || 1,
+      limit: limit || 10,
+      sortBy: sortBy || "createdAt",
+      order: order || "desc",
+    };
+
+    const result = await getMyJobsAppliedService(req.user._id, pagination);
+    res.status(200).json(result);
+  } catch (err) {
+    console.error("GET MY JOBS ERROR:", err);
+    res.status(500).json({
+      success: false,
+      message: MSG.ERROR.SERVER_ERROR,
+    });
+  }
+};
+
 
 // Get featured jobs
 export const getFeaturedJobs = async (req, res) => {

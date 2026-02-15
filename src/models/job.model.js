@@ -16,6 +16,11 @@ const jobSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    website: { type: String, default: "" },
+    companyEmail: { type: String, default: "" },
+    companyProfile: { type: String, default: "" },
+    applyEmail: { type: String, default: "" },
+    applyLink: { type: String, default: "" },
     companyColor: {
       type: String,
       default: "bg-blue-600",

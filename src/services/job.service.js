@@ -1,5 +1,9 @@
 import Job from "../models/job.model.js";
 import { MSG } from "../constants/messages.js";
+import Profile from '../models/jobApplication.model.js';
+import JobApplication from '../models/jobApplication.model.js';
+import mongoose from "mongoose";
+
 
 export const createJobService = async (jobData, userId) => {
   try {
@@ -240,6 +244,69 @@ export const getMyJobsService = async (userId, pagination = {}) => {
       },
     };
   } catch (error) {
+    throw error;
+  }
+};
+
+
+
+
+export const getMyJobsAppliedService = async (userId, pagination = {}) => {
+  try {
+    const { page = 1, limit = 10 } = pagination;
+    const skip = (page - 1) * limit;
+
+    // 1. Convert userId string to ObjectId safely
+    const searchId = new mongoose.Types.ObjectId(userId);
+
+    const userProfile = await mongoose.connection.db.collection('profiles').findOne({ 
+      userId: searchId 
+    });
+
+    // 3. Agar profile nahi milti toh gracefully error handle karein
+    if (!userProfile) {
+      console.error(`[ERROR] Profile not found for userId: ${userId}`);
+      return {
+        success: false,
+        message: "Profile not found. Please complete your profile first.",
+        data: [],
+        pagination: { 
+          total: 0, 
+          page: parseInt(page), 
+          limit: parseInt(limit), 
+          totalPages: 0 
+        }
+      };
+    }
+
+    // 4. Job Application Search
+    // Note: 'applicant' field mein profile ki _id (userProfile._id) check hoti hai
+    const query = { applicant: userProfile._id };
+
+    // Promise.all use kar rahe hain performance ke liye
+    const [applications, total] = await Promise.all([
+      JobApplication.find(query)
+        .populate('job') // Isse job ki details mil jayengi
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(), // Lean fast hota hai
+      JobApplication.countDocuments(query)
+    ]);
+
+    return {
+      success: true,
+      data: applications,
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(total / limit)
+      }
+    };
+
+  } catch (error) {
+    console.error("SERVICE ERROR:", error);
     throw error;
   }
 };

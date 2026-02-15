@@ -9,6 +9,7 @@ import {
   getFeaturedJobs,
   toggleJobStatus,
   requestVerification, validateOTP,
+  getJobsAppliedController,
 } from "../controllers/job.controller.js";
 import {
   createJobApplication,
@@ -31,6 +32,8 @@ router.get("/:id", getJobById);
 // Protected routes (auth required)
 router.post("/create", authMiddleware, createJob);
 router.get("/my/jobs", authMiddleware, getMyJobs);
+router.get("/my/jobs/jobseeker/count", authMiddleware, getJobsAppliedController);
+
 router.put("/update/:id", authMiddleware, updateJob);
 router.delete("/delete/:id", authMiddleware, deleteJob);
 router.patch("/toggle-status/:id", authMiddleware, toggleJobStatus);
@@ -42,6 +45,7 @@ router.post("/:id/apply", authMiddleware, upload.single("resume"), createJobAppl
 router.get("/applications/my", authMiddleware, getMyApplications);
 router.get("/:id/applications", authMiddleware, getJobApplications);
 router.get("/applications/:id", authMiddleware, getApplicationById);
+
 router.put("/applications/:id/status", authMiddleware, updateApplicationStatus);
 router.delete("/applications/:id/withdraw", authMiddleware, withdrawApplication);
 

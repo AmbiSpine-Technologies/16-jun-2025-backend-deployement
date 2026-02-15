@@ -28,6 +28,13 @@ export const createJobValidation = Joi.object({
   .messages({
     "any.required": "Please select an industry to post this job",
   }),
+  website: Joi.string().uri().allow("").optional(), 
+  companyEmail: Joi.string().email().allow("").optional(),
+  companyProfile: Joi.string().allow("").optional(),
+  applyEmail: Joi.string().email().required().messages({
+    "any.required": "Recruitment email is required to receive applications"
+  }),
+  applyLink: Joi.string().uri().allow("").optional(),
   isFeatured: Joi.boolean().optional(),
   expiresAt: Joi.date().optional(),
 });
@@ -57,6 +64,13 @@ export const updateJobValidation = Joi.object({
     .optional(),
   industry: Joi.string()
     .optional(),
+    website: Joi.string().uri().allow("").optional(), 
+  companyEmail: Joi.string().email().allow("").optional(),
+  companyProfile: Joi.string().allow("").optional(),
+  applyEmail: Joi.string().email().required().messages({
+    "any.required": "Recruitment email is required to receive applications"
+  }),
+  applyLink: Joi.string().uri().allow("").optional(),
   isFeatured: Joi.boolean().optional(),
   isActive: Joi.boolean().optional(),
   expiresAt: Joi.date().optional(),
